@@ -5,9 +5,14 @@
 package it.polito.tdp.imdb;
 
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
+import it.polito.tdp.imdb.db.Arco;
+import it.polito.tdp.imdb.model.Director;
 import it.polito.tdp.imdb.model.Model;
+import it.polito.tdp.imdb.model.RegistaPeso;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -35,10 +40,10 @@ public class FXMLController {
     private Button btnCercaAffini; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxAnno"
-    private ComboBox<?> boxAnno; // Value injected by FXMLLoader
+    private ComboBox<Integer> boxAnno; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxRegista"
-    private ComboBox<?> boxRegista; // Value injected by FXMLLoader
+    private ComboBox<Director> boxRegista; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtAttoriCondivisi"
     private TextField txtAttoriCondivisi; // Value injected by FXMLLoader
@@ -48,16 +53,60 @@ public class FXMLController {
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-
+    	this.txtResult.clear();
+    	this.boxRegista.getItems().clear();
+    	int anno;
+    	try {
+    		anno = this.boxAnno.getValue();
+    		model.creaGrafo(anno);
+    		this.txtResult.appendText("grafo creato con "+model.getGrafo().vertexSet().size()+" vertici e "+model.getGrafo().edgeSet().size()+" archi");
+    		this.boxRegista.getItems().addAll(model.getGrafo().vertexSet());
+    	}catch(NullPointerException e) {
+    		this.txtResult.setText(e.getMessage());
+    	}
+    	
     }
 
     @FXML
     void doRegistiAdiacenti(ActionEvent event) {
+    	this.txtResult.clear();
+    	Director dir;
+    	try {
+    		dir = this.boxRegista.getValue();
+    		List<RegistaPeso> res = model.getAdiacenti(dir);
+    		for(RegistaPeso rp: res) {
+    			if(rp.getD1().equals(dir))
+    				this.txtResult.appendText(rp.getD2()+" "+rp.getW()+"\n");
+    			else if(rp.getD2().equals(dir))
+    				this.txtResult.appendText(rp.getD1()+" "+rp.getW()+"\n");
+    		}
 
+    		
+    	}catch(NullPointerException e){
+    		e.printStackTrace();
+    	}
     }
 
     @FXML
     void doRicorsione(ActionEvent event) {
+    	this.txtResult.clear();
+    	int c;
+    	Director d;
+    	try {
+    		c = Integer.parseInt(this.txtAttoriCondivisi.getText());
+    		d = boxRegista.getValue();
+    		List<Director> res = model.getCammino(d, c);
+    		int sum = model.getBestSum();
+    		for(Director dir: res)
+    			this.txtResult.appendText(dir+"\n");
+    		
+    		this.txtResult.appendText("somma: "+sum);
+    		
+    	}catch(NullPointerException e) {
+    		this.txtResult.setText(e.getMessage());
+    	}catch(NumberFormatException e) {
+    		this.txtResult.setText("Inserire un numero intero");
+    	}
 
     }
 
@@ -76,6 +125,10 @@ public class FXMLController {
    public void setModel(Model model) {
     	
     	this.model = model;
+    	this.boxAnno.getItems().add(2004);
+    	this.boxAnno.getItems().add(2005);
+    	this.boxAnno.getItems().add(2006);
+
     	
     }
     
